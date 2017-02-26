@@ -1,0 +1,22 @@
+{
+    "source": {
+        "url": "http://www.google.com",
+        "method": "GET",
+        "timeout": 10000,
+        "followRedirect": true,
+        "maxRedirects": 10
+    },
+    "request": {
+        "interval": 1000,
+        "success": [200],
+        "retries": 5
+    },
+    "logger": {
+        "dir_path": "logs",
+        "dev-level": "verbose",
+        "prod-level": "info"
+    },
+    "env": {
+        "dev": "development"
+    }
+}
