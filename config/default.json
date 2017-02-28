@@ -9,6 +9,9 @@
         "followRedirect": true,
         "maxRedirects": 10
     },
+    "upload": {
+        "story": "http://localhost:10010/api/v1/story"
+    },
     "request": {
         "interval": 1000,
         "success": [200],

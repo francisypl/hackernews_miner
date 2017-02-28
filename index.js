@@ -67,20 +67,25 @@ function getDescriptions(bodyStr) {
 function formatStoryForUpload(story, data) {
     let uploadStory = {
         source: config.get('source.name'),
-        title: story.title,
-        url: story.url
+        title: story.title
     };
 
-    // Let's enrich the story a bit
-    let ogImageUrl = getOGImageURL(data.body);
-    let description = getDescriptions(data.body);
-
-    if (!_.isNull(ogImageUrl)) {
-        uploadStory.og_image_url = ogImageUrl;
+    if (_.has(story, 'url')) {
+        uploadStory.url = story.url;
     }
 
-    if (!_.isEmpty(description)) {
-        uploadStory.description = description.join(' ');
+    if (!_.isNull(data)) {
+        // Let's enrich the story a bit
+        let ogImageUrl = getOGImageURL(data.body);
+        let description = getDescriptions(data.body);
+
+        if (!_.isNull(ogImageUrl)) {
+            uploadStory.og_image_url = ogImageUrl;
+        }
+
+        if (!_.isEmpty(description)) {
+            uploadStory.description = description.join(' ');
+        }
     }
 
     return uploadStory;
@@ -123,7 +128,12 @@ function parseRequest(err, res, topStories) {
             stories = _.map(fetchedStories, story => JSON.parse(story.body));
 
             _.each(stories, function(story) {
-                storyUrlPromises.push(request.getAsync(story.url));
+                if (_.has(story, 'url')) {
+                    storyUrlPromises.push(request.getAsync(story.url));
+                }
+                else {
+                    storyUrlPromises.push(Promise.resolve(null));
+                }
             });
 
             return Promise.all(storyUrlPromises);
