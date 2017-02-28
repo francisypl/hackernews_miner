@@ -20,6 +20,7 @@ function getOGImageURL(bodyStr) {
     let ogStr = new RegExp(/(property="og:image" content="([^"]|"")*")/g)
         .exec(bodyStr);
 
+    // If we can find a match
     if (!_.isNull(ogStr)) {
         ogStr = ogStr[0];
 
@@ -36,6 +37,7 @@ function getDescriptions(bodyStr) {
     let maxTries = 5;
     let maxValidParagraphs = 5;
 
+    // Try [maxTries] to parse <p> tags and get a description
     while (maxTries > 0 || validParagraphs.length < maxValidParagraphs) {
         let match = new RegExp(/<p>[A-Za-z0-9 ]*<\/p>/g).exec(bodyStr);
 
@@ -84,7 +86,7 @@ function formatStoryForUpload(story, data) {
 }
 
 function upload(stories) {
-
+    
 }
 
 function parseRequest(err, res, topStories) {
@@ -131,13 +133,11 @@ function parseRequest(err, res, topStories) {
                 return formatStoryForUpload(story, storyUrlData[index]);
             });
 
-            console.log(uploadStories);
-
-            // return upload(uploadStories);
+            return upload(uploadStories);
         })
-        // .then(function(data) {
-        //
-        // })
+        .then(function(data) {
+
+        })
         .catch(function(err) {
             return logger.warn(err);
         });
