@@ -39,7 +39,8 @@ function getDescriptions(bodyStr) {
 
     // Try [maxTries] to parse <p> tags and get a description
     while (maxTries > 0 || validParagraphs.length < maxValidParagraphs) {
-        let match = new RegExp(/<p>[A-Za-z0-9 ]*<\/p>/g).exec(bodyStr);
+        // match <p> tags with ascii characters inside without tags inside
+        let match = new RegExp(/<p>((?![<>])[\x00-\x7F])*<\/p>/g).exec(bodyStr);
 
         // If can't find anything to match
         if (_.isNull(match)) {
@@ -86,7 +87,7 @@ function formatStoryForUpload(story, data) {
 }
 
 function upload(stories) {
-    
+
 }
 
 function parseRequest(err, res, topStories) {
@@ -107,7 +108,7 @@ function parseRequest(err, res, topStories) {
     retries = config.get('request.retries');
 
     topStories = JSON.parse(topStories);
-    topStories = topStories.slice(0, 2);
+    topStories = topStories.slice(0, 3);
 
     // Parse body
     _.each(topStories, function(storyId) {
@@ -133,11 +134,13 @@ function parseRequest(err, res, topStories) {
                 return formatStoryForUpload(story, storyUrlData[index]);
             });
 
-            return upload(uploadStories);
-        })
-        .then(function(data) {
+            console.log(uploadStories);
 
+            // return upload(uploadStories);
         })
+        // .then(function(data) {
+        //
+        // })
         .catch(function(err) {
             return logger.warn(err);
         });
