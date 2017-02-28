@@ -1,6 +1,9 @@
 {
     "source": {
-        "url": "http://www.google.com",
+        "name": "hacker-news",
+        "base": "https://hacker-news.firebaseio.com/v0/",
+        "topStories": "topstories.json",
+        "item": "item/",
         "method": "GET",
         "timeout": 10000,
         "followRedirect": true,
