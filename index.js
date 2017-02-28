@@ -66,9 +66,12 @@ function getDescriptions(bodyStr) {
 
 function formatStoryForUpload(story, data) {
     let uploadStory = {
-        source: config.get('source.name'),
-        title: story.title
+        source: config.get('source.name')
     };
+
+    if (_.has(story, 'title')) {
+        uploadStory.title = story.title;
+    }
 
     if (_.has(story, 'url')) {
         uploadStory.url = story.url;
@@ -92,7 +95,24 @@ function formatStoryForUpload(story, data) {
 }
 
 function upload(stories) {
+    let filteredStories = _.filter(stories, function(story) {
+        return _.has(story, 'source') &&
+               _.has(story, 'title') &&
+               _.has(story, 'url');
+    });
 
+    if (stories.length > 0) {
+        return request.postAsync({
+            url: config.get('upload.story'),
+            json: true,
+            headers: {
+                'content-type': 'application/json',
+            },
+            body: filteredStories
+        });
+    }
+
+    return Promise.resolve(null);
 }
 
 function parseRequest(err, res, topStories) {
@@ -113,7 +133,7 @@ function parseRequest(err, res, topStories) {
     retries = config.get('request.retries');
 
     topStories = JSON.parse(topStories);
-    topStories = topStories.slice(0, 3);
+    topStories = topStories.slice(0, 100);
 
     // Parse body
     _.each(topStories, function(storyId) {
@@ -144,13 +164,16 @@ function parseRequest(err, res, topStories) {
                 return formatStoryForUpload(story, storyUrlData[index]);
             });
 
-            console.log(uploadStories);
-
-            // return upload(uploadStories);
+            return upload(uploadStories);
         })
-        // .then(function(data) {
-        //
-        // })
+        .then(function(data) {
+            if (_.has(data, 'body') && _.has(data.body, 'message')) {
+                logger.info(`Success: ${data.body.message}`);
+            }
+            else {
+                logger.warn('Failed to upload stories');
+            }
+        })
         .catch(function(err) {
             return logger.warn(err);
         });
