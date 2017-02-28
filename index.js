@@ -35,14 +35,14 @@ function getOGImageURL(bodyStr) {
 function getDescriptions(bodyStr) {
     let validParagraphs = [];
     let maxTries = 5;
-    let maxValidParagraphs = 5;
+    let maxValidParagraphs = 3;
 
     // Try [maxTries] to parse <p> tags and get a description
     while (maxTries > 0 || validParagraphs.length < maxValidParagraphs) {
         // match <p> tags with ascii characters inside without tags inside
         let match = new RegExp(/<p>((?![<>])[\x00-\x7F])*<\/p>/g).exec(bodyStr);
 
-        // If can't find anything to match
+        // If can't find anything to match then bye
         if (_.isNull(match)) {
             break;
         }
