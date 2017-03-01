@@ -10,10 +10,11 @@
         "maxRedirects": 10
     },
     "upload": {
-        "story": "http://localhost:10010/api/v1/story"
+        "story": "http://localhost:10010/api/v1/story",
+        "maxStories": 10
     },
     "request": {
-        "interval": 1000,
+        "interval": 60000,
         "success": [200],
         "retries": 5
     },
@@ -24,5 +25,9 @@
     },
     "env": {
         "dev": "development"
+    },
+    "context": {
+        "dir_path": "context",
+        "filename": "visited.json"
     }
 }

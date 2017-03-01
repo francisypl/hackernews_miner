@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const request = Promise.promisifyAll(require('request'));
 const config = require('config');
 const logger = require('./lib/logger');
+const fs = require('fs');
 const _ = require('underscore');
 
 let intervalFn;
@@ -33,12 +34,12 @@ function getOGImageURL(bodyStr) {
 }
 
 function getDescriptions(bodyStr) {
-    let validParagraphs = [];
+    let description = '';
     let maxTries = 5;
-    let maxValidParagraphs = 3;
+    let maxDescriptionLength = 1000;
 
     // Try [maxTries] to parse <p> tags and get a description
-    while (maxTries > 0 || validParagraphs.length < maxValidParagraphs) {
+    while (maxTries > 0 || description.length < maxDescriptionLength) {
         // match <p> tags with ascii characters inside without tags inside
         let match = new RegExp(/<p>((?![<>])[\x00-\x7F])*<\/p>/g).exec(bodyStr);
 
@@ -53,7 +54,7 @@ function getDescriptions(bodyStr) {
             .replace(/<\/p>/,''); // remove </p> tag
 
         if (formated.length > 0) {
-            validParagraphs.push(formated);
+            description += formated;
             maxTries -= 1;
         }
 
@@ -61,7 +62,7 @@ function getDescriptions(bodyStr) {
         bodyStr = bodyStr.slice(bodyStr.indexOf(match[0]) + match[0].length);
     }
 
-    return validParagraphs;
+    return description;
 }
 
 function formatStoryForUpload(story, data) {
@@ -86,8 +87,8 @@ function formatStoryForUpload(story, data) {
             uploadStory.og_image_url = ogImageUrl;
         }
 
-        if (!_.isEmpty(description)) {
-            uploadStory.description = description.join(' ');
+        if (description) {
+            uploadStory.description = description;
         }
     }
 
@@ -115,6 +116,35 @@ function upload(stories) {
     return Promise.resolve(null);
 }
 
+function getSavedUploadedStories() {
+    let dirName = config.get('context.dir_path');
+    let fileName = config.get('context.filename');
+    let filePath = `${dirName}/${fileName}`;
+
+    if (!fs.existsSync(filePath)) {
+        return [];
+    }
+
+    return JSON.parse(fs.readFileSync(filePath).toString());
+}
+
+function saveTriedStories(stories) {
+    let dirName = config.get('context.dir_path');
+    let fileName = config.get('context.filename');
+    let filePath = `${dirName}/${fileName}`;
+
+    if (!fs.existsSync(dirName)) {
+        fs.mkdirSync(dirName);
+    }
+
+    if (fs.existsSync(filePath)) {
+        stories.concat(getSavedUploadedStories());
+        fs.truncateSync(filePath);
+    }
+
+    return fs.writeFileSync(filePath, JSON.stringify(stories));
+}
+
 function parseRequest(err, res, topStories) {
     if (err || !_.contains(config.get('request.success'), res.statusCode)) {
         // if we are out of retries, stop the miner
@@ -128,12 +158,14 @@ function parseRequest(err, res, topStories) {
 
     let fetchPromises = [];
     let stories = [];
+    let uploadStories = [];
 
     // reset retries, if it is successful
     retries = config.get('request.retries');
 
     topStories = JSON.parse(topStories);
-    topStories = topStories.slice(0, 100);
+    topStories = _.difference(topStories, getSavedUploadedStories());
+    topStories = topStories.slice(0, config.get('upload.maxStories'));
 
     // Parse body
     _.each(topStories, function(storyId) {
@@ -160,7 +192,7 @@ function parseRequest(err, res, topStories) {
         })
         // Fetch the stories' url content
         .then(function(storyUrlData) {
-            let uploadStories = _.map(stories, function(story, index) {
+            uploadStories = _.map(stories, function(story, index) {
                 return formatStoryForUpload(story, storyUrlData[index]);
             });
 
@@ -173,33 +205,29 @@ function parseRequest(err, res, topStories) {
             else {
                 logger.warn('Failed to upload stories');
             }
+
+            // Save stories we tried uploading, if it worked good, if not
+            // we skip them
+            saveTriedStories(topStories);
         })
         .catch(function(err) {
+            // If this failed for any reason, let's skip them
+            saveTriedStories(topStories);
             return logger.warn(err);
         });
 }
 
-let source = config.get('source');
+intervalFn = setInterval(
+    function() {
+        let source = config.get('source');
 
-request({
-    url: source.base + source.topStories,
-    method: source.method,
-    timeout: source.timeout,
-    followRedirect: source.followRedirect,
-    maxRedirects: source.maxRedirects
-}, parseRequest);
-
-// intervalFn = setInterval(
-//     function() {
-//         let source = config.get('source');
-//
-//         return request({
-//             url: source.base + source.topStories,
-//             method: source.method,
-//             timeout: source.timeout,
-//             followRedirect: source.followRedirect,
-//             maxRedirects: source.maxRedirects
-//         }, parseRequest);
-//     },
-//     config.get('request.interval')
-// );
+        return request({
+            url: source.base + source.topStories,
+            method: source.method,
+            timeout: source.timeout,
+            followRedirect: source.followRedirect,
+            maxRedirects: source.maxRedirects
+        }, parseRequest);
+    },
+    config.get('request.interval')
+);
