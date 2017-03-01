@@ -138,7 +138,7 @@ function saveTriedStories(stories) {
     }
 
     if (fs.existsSync(filePath)) {
-        stories.concat(getSavedUploadedStories());
+        stories = stories.concat(getSavedUploadedStories());
         fs.truncateSync(filePath);
     }
 
