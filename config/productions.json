@@ -14,7 +14,7 @@
         "maxStories": 10
     },
     "request": {
-        "interval": 60000,
+        "interval": 1800000,
         "success": [200],
         "retries": 5
     },
