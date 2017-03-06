@@ -14,7 +14,7 @@
         "maxStories": 10
     },
     "request": {
-        "interval": 5000,
+        "interval": 60000,
         "success": [200],
         "retries": 5
     },
@@ -23,7 +23,7 @@
         "dev-level": "verbose",
         "prod-level": "info"
     },
-    "env": "development",
+    "env": "production",
     "context": {
         "dir_path": "context",
         "filename": "visited.json"
