@@ -10,7 +10,7 @@
         "maxRedirects": 10
     },
     "upload": {
-        "story": "http://localhost:10010/api/v1/story",
+        "story": "https://mineranker.herokuapp.com/api/v1/story",
         "maxStories": 10
     },
     "request": {
