@@ -10,7 +10,7 @@
         "maxRedirects": 10
     },
     "upload": {
-        "story": "https://mineranker.herokuapp.com/api/v1/story",
+        "story": "https://mineranker.herokuapp.com/api/miners/5900d2cf0b9c9157e66e5f56/story",
         "maxStories": 10
     },
     "request": {
